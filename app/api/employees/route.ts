@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PATCH - Update employee status
+// PATCH - Toggle active/inactive
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json()
@@ -69,6 +69,31 @@ export async function PATCH(request: NextRequest) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ employee: data })
+  } catch (error) {
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+  }
+}
+
+// DELETE - Employee delete karo
+export async function DELETE(request: NextRequest) {
+  try {
+    const { id } = await request.json()
+
+    if (!id) {
+      return NextResponse.json({ error: 'Employee ID required hai' }, { status: 400 })
+    }
+
+    const db = supabaseAdmin()
+
+    // Pehle attendance records delete karo (foreign key constraint)
+    await db.from('attendance').delete().eq('employee_id', id)
+
+    // Phir employee delete karo
+    const { error } = await db.from('employees').delete().eq('id', id)
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    return NextResponse.json({ message: 'Employee delete ho gaya!' })
   } catch (error) {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
